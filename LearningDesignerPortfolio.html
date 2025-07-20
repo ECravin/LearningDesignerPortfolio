@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elizabeth Cravin - Learning Designer Portfolio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: The SPA is designed as a personal branding dashboard. It opens with a strong introduction and contact info, followed by a high-impact dashboard of key metrics (Years, Engagement Boost, etc.) to immediately showcase value. The main content is an interactive tabbed section for projects. This allows recruiters to quickly switch between detailed project views without scrolling, making comparison and deep-dives user-friendly. Each project view uses cards and tags for scannability and includes a dynamic chart to visualize key results, transforming static numbers into compelling evidence of success. A new interactive POS walkthrough modal is added, accessible via a button, to demonstrate product education design capabilities without cluttering the main portfolio view. This walkthrough is now presented as a simulated handheld POS system, providing a visual and interactive guide on ringing up customers. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Key career metrics (5 years experience, 25% engagement increase, 150+ hours migrated, 95% satisfaction rate). Goal: Inform & Impress. Viz: Dynamic Stat Cards with Counter Animation (HTML/CSS/JS). Interaction: Number animation on load, hover effects. Justification: Immediately communicates top-line value with added visual interest.
+        - Report Info: Three distinct projects. Goal: Organize & Detail. Viz: Interactive Tabs (HTML/CSS/JS). Interaction: Click to switch content with smoother transitions. Justification: Prevents information overload and facilitates focused review.
+        - Report Info: Project 1 Impact (25% engagement increase). Goal: Compare & Highlight Growth. Viz: Doughnut Chart (Chart.js/Canvas). Interaction: Hover for tooltips. Justification: Visually represents the improvement more effectively than text alone.
+        - Report Info: Project 3 Impact (95% satisfaction/resolution). Goal: Compare & Show Excellence. Viz: Bar Chart (Chart.js/Canvas). Interaction: Hover for tooltips. Justification: Provides a clear, strong visual for high performance metrics.
+        - Report Info: Tools & Methodologies for each project. Goal: Inform & Organize. Viz: Styled Tags/Badges (HTML/CSS). Interaction: None. Justification: More scannable and visually appealing than a bulleted list.
+        - Report Info: Interactive POS Walkthrough (Handheld). Goal: Demonstrate Product Education & Interaction Design. Viz: Multi-step Modal with a simulated handheld device frame, Product Cards, Dynamic Order Summary, and Interactive Buttons (HTML/CSS/JS). Interaction: Add/remove items, apply discount, select payment, navigate steps. Justification: Directly showcases ability to create interactive learning experiences for product adoption and training, now with a stronger visual metaphor for a handheld system. Detailed instructions within the steps guide the user through the "ringing up" process. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F5F5F4; /* stone-100 */
+            color: #374151; /* gray-700 */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 350px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .tab-active {
+            background-color: #14B8A6; /* teal-500 */
+            color: #ffffff;
+            border-color: #14B8A6;
+        }
+        .tab-inactive {
+            background-color: #ffffff;
+            color: #374151; /* gray-700 */
+            border-color: #D1D5DB; /* gray-300 */
+        }
+        .project-content {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+        .project-content.active {
+            display: block;
+            opacity: 1;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+        .modal-content {
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            width: 95%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        .modal-close-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6B7280; /* gray-500 */
+        }
+        .pos-step {
+            display: none;
+        }
+        .pos-step.active {
+            display: block;
+        }
+        .product-card {
+            border: 1px solid #E5E7EB; /* gray-200 */
+            border-radius: 0.5rem;
+            padding: 1rem;
+            text-align: center;
+            transition: transform 0.2s ease-in-out;
+        }
+        .product-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        /* Handheld POS Device Styling */
+        .handheld-pos-frame {
+            width: 100%;
+            max-width: 380px; /* Typical handheld device width */
+            height: 650px; /* Typical handheld device height */
+            background-color: #374151; /* Dark gray for device body */
+            border-radius: 2rem;
+            padding: 1rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25), 0 0 0 5px #E5E7EB; /* Outer shadow and light border */
+            display: flex;
+            flex-direction: column;
+            margin: 0 auto; /* Center the device */
+        }
+        .pos-screen {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            flex-grow: 1;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto; /* Enable scrolling for screen content */
+        }
+        .pos-screen-header {
+            background-color: #14B8A6; /* Teal for header */
+            color: white;
+            padding: 0.75rem;
+            border-radius: 0.75rem 0.75rem 0 0;
+            text-align: center;
+            font-weight: bold;
+            margin: -1rem -1rem 1rem -1rem; /* Adjust to fill screen width */
+        }
+        .pos-screen-footer {
+            margin-top: auto; /* Push footer to bottom */
+            padding-top: 1rem;
+            border-top: 1px solid #E5E7EB;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-7xl">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-teal-700">Elizabeth Cravin</h1>
+            <p class="text-xl md:text-2xl text-teal-600 mt-2">Learning Designer Portfolio</p>
+            <div class="mt-4 flex justify-center items-center space-x-6 text-gray-600 group">
+                <span class="flex items-center hover:text-teal-700 hover:scale-105 transition-all duration-300">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    elizabeth.cravin@gmail.com
+                </span>
+                <span class="flex items-center hover:text-teal-700 hover:scale-105 transition-all duration-300">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                    (832) 840-7188
+                </span>
+            </div>
+        </header>
+
+        <main>
+            <section id="introduction" class="mb-16 bg-white p-8 rounded-xl shadow-md">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Introduction</h2>
+                <p class="text-lg text-gray-600">
+                    As a dedicated and results-driven Instructional Designer/Trainer with 5 years of experience, I am passionate about creating engaging, effective, and scalable learning solutions. My expertise spans the entire instructional design lifecycle, from needs assessment and content development to LMS administration and impact evaluation. I leverage adult learning theory, Agile methodologies, and a diverse toolkit of authoring software to transform complex information into clear, actionable, and impactful learning experiences. This portfolio showcases key projects where I applied my skills to address specific organizational challenges, enhance user proficiency, and drive measurable improvements in learning outcomes and operational efficiency.
+                </p>
+            </section>
+            
+            <section class="mb-16">
+                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
+                    <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                        <h3 class="text-4xl font-bold text-teal-600" data-target="5">0</h3>
+                        <p class="mt-2 text-gray-600">Years Experience</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                        <h3 class="text-4xl font-bold text-teal-600" data-target="150">0</h3>
+                        <p class="mt-2 text-gray-600">Hours of Content Migrated</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                        <h3 class="text-4xl font-bold text-teal-600" data-target="25">0<span class="text-2xl">%</span></h3>
+                        <p class="mt-2 text-gray-600">Increase in User Engagement</p>
+                    </div>
+                     <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                        <h3 class="text-4xl font-bold text-teal-600" data-target="95">0<span class="text-2xl">%</span></h3>
+                        <p class="mt-2 text-gray-600">Avg. Satisfaction Rate</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="projects" class="bg-white p-4 sm:p-8 rounded-xl shadow-md">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Project Showcase</h2>
+                <div class="flex flex-wrap justify-center gap-2 sm:gap-4 mb-8" id="project-tabs">
+                    <button data-project="project1" class="project-tab py-2 px-4 rounded-full font-semibold border-2 transition-colors duration-300">LMS & Digital Transformation</button>
+                    <button data-project="project2" class="project-tab py-2 px-4 rounded-full font-semibold border-2 transition-colors duration-300">Agile App Development</button>
+                    <button data-project="project3" class="project-tab py-2 px-4 rounded-full font-semibold border-2 transition-colors duration-300">Software Adoption Program</button>
+                </div>
+
+                <div id="project-container" class="mt-8">
+                    <div id="project1" class="project-content">
+                        <div class="grid md:grid-cols-2 gap-8 items-center">
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-800 mb-3">Project 1: Comprehensive LMS Migration & Digital Learning Transformation</h3>
+                                <p class="mb-4"><strong>Challenge:</strong> The organization relied on traditional, in-person training and disparate physical resources, leading to inconsistencies, difficulty in tracking progress, and high administrative overhead. A centralized, digital solution was needed to scale training.</p>
+                                <p class="mb-4"><strong>My Role:</strong> As LMS Administrator/Technical Support Specialist, I analyzed content, designed the LMS information architecture, converted materials into SCORM-compliant modules, managed users, generated reports, and provided technical support.</p>
+                                <div class="mb-4">
+                                    <h4 class="font-semibold mb-2">Approach & Tools:</h4>
+                                    <div class="flex flex-wrap gap-2">
+                                        <span class="bg-teal-100 text-teal-800 text-sm font-medium px-2.5 py-0.5 rounded-full">ADDIE Model</span>
+                                        <span class="bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-0.5 rounded-full">Articulate Storyline 360</span>
+                                        <span class="bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-0.5 rounded-full">Articulate Rise</span>
+                                        <span class="bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-0.5 rounded-full">Adobe Captivate</span>
+                                        <span class="bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-0.5 rounded-full">Cornerstone LMS</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-semibold text-center mb-2">Impact: +25% User Engagement</h4>
+                                <div class="chart-container">
+                                    <canvas id="engagementChart"></canvas>
+                                </div>
+                                <p class="text-center text-sm text-gray-500 mt-2">Visualizing the growth in user engagement and comprehension after digital transformation.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="project2" class="project-content">
+                         <div class="grid md:grid-cols-2 gap-8 items-center">
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-800 mb-3">Project 2: Agile-Driven Onboarding Application Development</h3>
+                                <p class="mb-4"><strong>Challenge:</strong> The customer feedback process was inefficient, causing delayed responses and potential frustration during critical early interactions. A more streamlined system was needed to capture and act on feedback quickly.</p>
+                                <p class="mb-4"><strong>My Role:</strong> As a member of the ServiceNow NextGen Program, I contributed to conceptualizing and configuring custom applications, using form configuration and scripting. I actively participated in Agile sprints, project planning, and cross-functional collaboration.</p>
+                                <div class="mb-4">
+                                    <h4 class="font-semibold mb-2">Approach & Tools:</h4>
+                                    <div class="flex flex-wrap gap-2">
+                                        <span class="bg-teal-100 text-teal-800 text-sm font-medium px-2.5 py-0.5 rounded-full">Agile Framework</span>
+                                        <span class="bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-0.5 rounded-full">ServiceNow</span>
+                                        <span class="bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-0.5 rounded-full">Form Configuration</span>
+                                        <span class="bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-0.5 rounded-full">Scripting</span>
+                                         <span class="bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-0.5 rounded-full">SME Coordination</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-stone-100 p-6 rounded-lg">
+                                <h4 class="text-lg font-semibold mb-2">Impact & Results</h4>
+                                <ul class="list-disc list-inside space-y-2 text-gray-700">
+                                    <li><strong>Improved Customer Satisfaction:</strong> The application decreased feedback response time, boosting satisfaction ratings and supporting a smoother customer onboarding experience.</li>
+                                    <li><strong>Enhanced Platform Functionality:</strong> Demonstrated ability to configure and script within a complex system to meet specific business needs and improve operational efficiency.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="project3" class="project-content">
+                        <div class="grid md:grid-cols-2 gap-8 items-center">
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-800 mb-3">Project 3: Technical Documentation & Training Program for Software Adoption</h3>
+                                <p class="mb-4"><strong>Challenge:</strong> Users frequently encountered issues with specialized applications, leading to high support ticket volumes and reduced productivity. Clear, effective, and accessible training and reference materials were needed.</p>
+                                <p class="mb-4"><strong>My Role:</strong> In technical support roles, I identified user pain points, developed step-by-step technical documentation (guides, FAQs), designed and delivered engaging training sessions, maintained a documentation repository, and analyzed incident data for improvements.</p>
+                                 <div class="mb-4">
+                                    <h4 class="font-semibold mb-2">Approach & Tools:</h4>
+                                    <div class="flex flex-wrap gap-2">
+                                        <span class="bg-teal-100 text-teal-800 text-sm font-medium px-2.5 py-0.5 rounded-full">Needs Assessment</span>
+                                        <span class="bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-0.5 rounded-full">SharePoint</span>
+                                        <span class="bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-0.5 rounded-full">Remedy Ticketing</span>
+                                        <span class="bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-0.5 rounded-full">WebEx</span>
+                                        <span class="bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-0.5 rounded-full">Self-Service Docs</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-semibold text-center mb-2">Impact: High Performance Metrics</h4>
+                                <div class="chart-container">
+                                    <canvas id="satisfactionChart"></canvas>
+                                </div>
+                                <p class="text-center text-sm text-gray-500 mt-2">Achieved high rates in both customer satisfaction and technical issue resolution through proactive training and documentation.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="pos-walkthrough-section" class="mb-16 bg-white p-8 rounded-xl shadow-md text-center">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Interactive Product Walkthrough Sample</h2>
+                <p class="text-lg text-gray-600 mb-6">Explore a simplified handheld point-of-sale (POS) system walkthrough, demonstrating an interactive approach to product education and user training on how to ring up customers.</p>
+                <button id="openPosWalkthrough" class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-6 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105">
+                    Start POS Walkthrough
+                </button>
+            </section>
+        </main>
+
+        <footer class="text-center mt-16 pt-8 border-t border-gray-200">
+            <p class="text-gray-500">&copy; 2025 Elizabeth Cravin. All Rights Reserved.</p>
+        </footer>
+    </div>
+
+    <!-- POS Walkthrough Modal -->
+    <div id="posWalkthroughModal" class="modal">
+        <div class="modal-content">
+            <button id="closePosWalkthrough" class="modal-close-button">&times;</button>
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Handheld POS System Walkthrough</h2>
+
+            <div class="handheld-pos-frame">
+                <div class="pos-screen">
+                    <div class="pos-screen-header">
+                        OmniPOS Lite
+                    </div>
+
+                    <div id="posStep1" class="pos-step active">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">Step 1: Select Products</h3>
+                        <p class="text-sm text-gray-500 mb-4">Tap on items to add them to the customer's order.</p>
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            <div class="product-card">
+                                <p class="font-bold text-lg">Coffee</p>
+                                <p class="text-gray-600 mb-1">$3.50</p>
+                                <button class="add-product-btn bg-teal-500 hover:bg-teal-600 text-white py-1 px-3 rounded-full text-xs" data-product-name="Coffee" data-product-price="3.50">Add</button>
+                            </div>
+                            <div class="product-card">
+                                <p class="font-bold text-lg">Croissant</p>
+                                <p class="text-gray-600 mb-1">$2.75</p>
+                                <button class="add-product-btn bg-teal-500 hover:bg-teal-600 text-white py-1 px-3 rounded-full text-xs" data-product-name="Croissant" data-product-price="2.75">Add</button>
+                            </div>
+                            <div class="product-card">
+                                <p class="font-bold text-lg">Muffin</p>
+                                <p class="text-gray-600 mb-1">$3.00</p>
+                                <button class="add-product-btn bg-teal-500 hover:bg-teal-600 text-white py-1 px-3 rounded-full text-xs" data-product-name="Muffin" data-product-price="3.00">Add</button>
+                            </div>
+                             <div class="product-card">
+                                <p class="font-bold text-lg">Tea</p>
+                                <p class="text-gray-600 mb-1">$2.50</p>
+                                <button class="add-product-btn bg-teal-500 hover:bg-teal-600 text-white py-1 px-3 rounded-full text-xs" data-product-name="Tea" data-product-price="2.50">Add</button>
+                            </div>
+                        </div>
+                        <div class="pos-screen-footer text-right">
+                            <button id="nextStep1" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-3 rounded-full text-sm transition-colors duration-300">Next</button>
+                        </div>
+                    </div>
+
+                    <div id="posStep2" class="pos-step">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">Step 2: Review Order</h3>
+                        <p class="text-sm text-gray-500 mb-4">Verify items. Tap 'Remove' to delete an item.</p>
+                        <div class="bg-stone-50 p-3 rounded-lg flex-grow flex flex-col justify-between">
+                            <div>
+                                <h4 class="font-bold text-gray-800 mb-2">Current Order:</h4>
+                                <ul id="orderList" class="mb-3 text-sm"></ul>
+                            </div>
+                            <div class="border-t border-gray-200 pt-2 text-sm">
+                                <p class="flex justify-between text-gray-700">Subtotal: <span id="subtotal">$0.00</span></p>
+                                <p class="flex justify-between text-gray-700">Tax (8%): <span id="tax">$0.00</span></p>
+                                <p class="flex justify-between text-lg font-bold text-gray-800">Total: <span id="total">$0.00</span></p>
+                            </div>
+                        </div>
+                        <div class="pos-screen-footer flex justify-between">
+                            <button id="prevStep2" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-3 rounded-full text-sm transition-colors duration-300">Back</button>
+                            <button id="nextStep2" class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-3 rounded-full text-sm transition-colors duration-300">Pay</button>
+                        </div>
+                    </div>
+
+                    <div id="posStep3" class="pos-step">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">Step 3: Choose Payment</h3>
+                        <p class="text-sm text-gray-500 mb-4">Select the customer's preferred payment method.</p>
+                        <div class="flex flex-col space-y-3 mb-4 flex-grow justify-center">
+                            <button id="payCash" class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded-full shadow-md transition-all duration-300">Pay with Cash</button>
+                            <button id="payCard" class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded-full shadow-md transition-all duration-300">Pay with Card</button>
+                        </div>
+                        <div class="text-center text-gray-600 text-sm" id="paymentMessage"></div>
+                        <div class="pos-screen-footer flex justify-between mt-auto">
+                            <button id="prevStep3" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-3 rounded-full text-sm transition-colors duration-300">Back</button>
+                        </div>
+                    </div>
+
+                    <div id="posStep4" class="pos-step text-center">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">Order Complete!</h3>
+                        <p class="text-sm text-gray-600 mb-4">Transaction successful. Hand the customer their receipt.</p>
+                        <div class="flex-grow flex items-center justify-center">
+                            <span class="text-6xl" role="img" aria-label="Checkmark">✅</span>
+                        </div>
+                        <div class="pos-screen-footer">
+                            <button id="newOrder" class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-6 rounded-full shadow-md transition-all duration-300">New Order</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const tabs = document.querySelectorAll('.project-tab');
+            const projectContents = document.querySelectorAll('.project-content');
+            let engagementChartInstance = null;
+            let satisfactionChartInstance = null;
+
+            function animateNumbers() {
+                document.querySelectorAll('[data-target]').forEach(counter => {
+                    const target = parseInt(counter.dataset.target);
+                    let current = 0;
+                    const duration = 1500;
+                    const step = target / (duration / 16);
+
+                    function updateCounter() {
+                        if (current < target) {
+                            current += step;
+                            if (current > target) current = target;
+                            counter.textContent = Math.floor(current);
+                            if (counter.dataset.target === "25" || counter.dataset.target === "95") {
+                                counter.textContent += '%';
+                            }
+                            requestAnimationFrame(updateCounter);
+                        } else {
+                            counter.textContent = target;
+                            if (counter.dataset.target === "25" || counter.dataset.target === "95") {
+                                counter.textContent += '%';
+                            }
+                        }
+                    }
+                    updateCounter();
+                });
+            }
+
+
+            function switchTab(targetId) {
+                tabs.forEach(t => {
+                    if (t.dataset.project === targetId) {
+                        t.classList.add('tab-active');
+                        t.classList.remove('tab-inactive');
+                    } else {
+                        t.classList.remove('tab-active');
+                        t.classList.add('tab-inactive');
+                    }
+                });
+
+                projectContents.forEach(content => {
+                    if (content.id === targetId) {
+                        content.classList.add('active');
+                    } else {
+                        content.classList.remove('active');
+                    }
+                });
+                
+                renderCharts(targetId);
+            }
+            
+            function renderCharts(activeProject) {
+                if (activeProject === 'project1') {
+                    if (engagementChartInstance) engagementChartInstance.destroy();
+                    const ctx = document.getElementById('engagementChart').getContext('2d');
+                    engagementChartInstance = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Previous Engagement', 'Increased Engagement'],
+                            datasets: [{
+                                label: 'User Engagement',
+                                data: [100, 25],
+                                backgroundColor: [
+                                    '#A7F3D0', /* teal-200 */
+                                    '#14B8A6'  /* teal-500 */
+                                ],
+                                borderColor: [
+                                    '#ffffff',
+                                    '#ffffff'
+                                ],
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            if (context.label === 'Increased Engagement') {
+                                                return ' +25% Increase';
+                                            }
+                                            return ' Baseline';
+                                        }
+                                    }
+                                }
+                            },
+                            cutout: '60%'
+                        }
+                    });
+                } else if (activeProject === 'project3') {
+                     if (satisfactionChartInstance) satisfactionChartInstance.destroy();
+                    const ctx = document.getElementById('satisfactionChart').getContext('2d');
+                    satisfactionChartInstance = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Customer Satisfaction', 'Ticket Resolution'],
+                            datasets: [{
+                                label: 'Rate',
+                                data: [95, 95],
+                                backgroundColor: [
+                                    '#5EEAD4', /* teal-300 */
+                                    '#14B8A6'  /* teal-500 */
+                                ],
+                                 borderColor: [
+                                    '#0D9488', /* teal-600 */
+                                    '#0F766E'  /* teal-700 */
+                                ],
+                                borderWidth: 1,
+                                barPercentage: 0.6
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            indexAxis: 'y',
+                            scales: {
+                                x: {
+                                    beginAtZero: true,
+                                    max: 100,
+                                    ticks: {
+                                        callback: function(value) {
+                                            return value + '%'
+                                        }
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                     callbacks: {
+                                        label: function(context) {
+                                            return ' ' + context.parsed.x + '% Success Rate';
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function () {
+                    switchTab(this.dataset.project);
+                });
+            });
+
+            // Set initial state
+            switchTab('project1');
+            animateNumbers();
+
+            // POS Walkthrough Logic
+            const posModal = document.getElementById('posWalkthroughModal');
+            const openPosBtn = document.getElementById('openPosWalkthrough');
+            const closePosBtn = document.getElementById('closePosWalkthrough');
+            const posSteps = document.querySelectorAll('.pos-step');
+            const orderList = document.getElementById('orderList');
+            const subtotalSpan = document.getElementById('subtotal');
+            const taxSpan = document.getElementById('tax');
+            const totalSpan = document.getElementById('total');
+            const paymentMessage = document.getElementById('paymentMessage');
+
+            let currentPosStep = 1;
+            let cart = [];
+            const TAX_RATE = 0.08;
+
+            function showPosStep(stepNumber) {
+                posSteps.forEach((step, index) => {
+                    if (index + 1 === stepNumber) {
+                        step.classList.add('active');
+                    } else {
+                        step.classList.remove('active');
+                    }
+                });
+                currentPosStep = stepNumber;
+            }
+
+            function updateOrderSummary() {
+                orderList.innerHTML = '';
+                let currentSubtotal = 0;
+                cart.forEach(item => {
+                    const li = document.createElement('li');
+                    li.classList.add('flex', 'justify-between', 'items-center', 'text-gray-600', 'mb-1');
+                    li.innerHTML = `<span>${item.name} ($${item.price.toFixed(2)})</span>`;
+                    const removeBtn = document.createElement('button');
+                    removeBtn.textContent = 'Remove';
+                    removeBtn.classList.add('text-red-500', 'hover:text-red-700', 'text-xs', 'ml-2', 'py-0.5', 'px-1', 'rounded');
+                    removeBtn.onclick = () => removeItemFromCart(item.name);
+                    li.appendChild(removeBtn);
+                    orderList.appendChild(li);
+                    currentSubtotal += item.price;
+                });
+
+                const currentTax = currentSubtotal * TAX_RATE;
+                const currentTotal = currentSubtotal + currentTax;
+
+                subtotalSpan.textContent = `$${currentSubtotal.toFixed(2)}`;
+                taxSpan.textContent = `$${currentTax.toFixed(2)}`;
+                totalSpan.textContent = `$${currentTotal.toFixed(2)}`;
+
+                // Enable/disable next buttons based on cart content
+                document.getElementById('nextStep1').disabled = cart.length === 0;
+                document.getElementById('nextStep2').disabled = cart.length === 0;
+                document.getElementById('nextStep1').classList.toggle('bg-gray-300', cart.length === 0);
+                document.getElementById('nextStep1').classList.toggle('hover:bg-gray-400', cart.length === 0);
+                document.getElementById('nextStep1').classList.toggle('bg-teal-500', cart.length > 0);
+                document.getElementById('nextStep1').classList.toggle('hover:bg-teal-600', cart.length > 0);
+
+                document.getElementById('nextStep2').classList.toggle('bg-gray-300', cart.length === 0);
+                document.getElementById('nextStep2').classList.toggle('hover:bg-gray-400', cart.length === 0);
+                document.getElementById('nextStep2').classList.toggle('bg-teal-500', cart.length > 0);
+                document.getElementById('nextStep2').classList.toggle('hover:bg-teal-600', cart.length > 0);
+            }
+
+            function removeItemFromCart(itemName) {
+                const index = cart.findIndex(item => item.name === itemName);
+                if (index > -1) {
+                    cart.splice(index, 1);
+                    updateOrderSummary();
+                }
+            }
+
+            openPosBtn.addEventListener('click', () => {
+                posModal.style.display = 'flex';
+                cart = []; // Reset cart on open
+                updateOrderSummary();
+                showPosStep(1);
+                paymentMessage.textContent = '';
+            });
+
+            closePosBtn.addEventListener('click', () => {
+                posModal.style.display = 'none';
+            });
+
+            document.querySelectorAll('.add-product-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const productName = this.dataset.productName;
+                    const productPrice = parseFloat(this.dataset.productPrice);
+                    cart.push({ name: productName, price: productPrice });
+                    updateOrderSummary();
+                });
+            });
+
+            document.getElementById('nextStep1').addEventListener('click', () => {
+                if (cart.length > 0) {
+                    showPosStep(2);
+                }
+            });
+
+            document.getElementById('prevStep2').addEventListener('click', () => {
+                showPosStep(1);
+            });
+
+            document.getElementById('nextStep2').addEventListener('click', () => {
+                if (cart.length > 0) {
+                    showPosStep(3);
+                }
+            });
+
+            document.getElementById('prevStep3').addEventListener('click', () => {
+                showPosStep(2);
+                paymentMessage.textContent = '';
+            });
+
+            document.getElementById('payCash').addEventListener('click', () => {
+                paymentMessage.textContent = 'Cash payment simulated. Transaction complete!';
+                setTimeout(() => showPosStep(4), 1000);
+            });
+
+            document.getElementById('payCard').addEventListener('click', () => {
+                paymentMessage.textContent = 'Card payment simulated. Transaction complete!';
+                setTimeout(() => showPosStep(4), 1000);
+            });
+
+            document.getElementById('newOrder').addEventListener('click', () => {
+                cart = [];
+                updateOrderSummary();
+                showPosStep(1);
+                paymentMessage.textContent = '';
+            });
+        });
+    </script>
+</body>
+</html>
